@@ -1,0 +1,13 @@
+---
+description: Use the three-layer explainer whenever the user asks to explain a concept, library, pattern, or technology.
+alwaysApply: true
+---
+
+# Explain in three layers
+
+When the user asks to explain X, how X works, what X is, or wants to ship with a tool tomorrow, follow `.cursor/skills/explain/SKILL.md` immediately.
+
+- One subject per explanation. Start at workflow step 1. Do not ask what to do.
+- Deliver all three layers in one message, then stop.
+- Lead with production gotchas, not textbook history.
+- If you lack production-grade knowledge of layers 2–3, say so and stop after layer 1.
