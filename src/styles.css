@@ -164,6 +164,17 @@ input:focus-visible {
   font-size: 12px;
 }
 
+.canvas-host {
+  border: 1px solid var(--line);
+  background: var(--white);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
 .field-row {
   display: flex;
   gap: 8px;
@@ -445,6 +456,12 @@ input:focus-visible {
   border-radius: 12px;
   display: flex;
   flex-direction: column;
+}
+
+.menu-id {
+  padding: 8px 12px 4px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .menu button {

@@ -22,67 +22,22 @@
         <p class="mark">Canvi</p>
         <div class="login-card" id="login-card">
           <div class="login-copy">
-            <h1 id="login-title">Welcome back</h1>
-            <p id="login-subtitle">Sign in to continue. Auth wiring comes later — this surface already behaves.</p>
+            <h1 id="login-title">Sign in with Canvas</h1>
+            <p id="login-subtitle">Canvi uses your Canvas account. Your Canvas ID is the identity on this side.</p>
           </div>
 
-          <form class="login-form" id="login-form" novalidate>
-            <label class="field" id="name-field" hidden>
-              <span>Name</span>
-              <input id="name-input" name="name" type="text" autocomplete="name" placeholder="Your name" />
-            </label>
-
-            <label class="field">
-              <span>Email</span>
-              <input
-                id="email-input"
-                name="email"
-                type="email"
-                autocomplete="username"
-                placeholder="you@studio.com"
-                required
-              />
-              <em class="field-hint" id="email-hint"></em>
-            </label>
-
-            <label class="field">
-              <span>Password</span>
-              <div class="field-row">
-                <input
-                  id="password-input"
-                  name="password"
-                  type="password"
-                  autocomplete="current-password"
-                  placeholder="••••••••"
-                  required
-                />
-                <button class="btn btn-icon" type="button" id="toggle-password" aria-pressed="false" aria-label="Show password">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                </button>
-              </div>
-            </label>
-
-            <div class="login-meta">
-              <button class="switch" type="button" id="remember-me" aria-pressed="false">
-                <span class="switch-track"><span class="switch-knob"></span></span>
-                Remember me
-              </button>
-              <button class="btn btn-text" type="button" id="forgot-password">Forgot password</button>
+          <form class="login-form" id="login-form">
+            <div class="field">
+              <span>Canvas</span>
+              <p class="canvas-host" id="canvas-host">Checking configuration…</p>
+              <em class="field-hint" id="login-hint"></em>
             </div>
 
             <button class="btn btn-gold btn-block" type="submit" id="submit-auth" data-magnetic>
-              <span class="btn-label">Sign in</span>
+              <span class="btn-label">Continue with Canvas</span>
               <span class="btn-spinner" aria-hidden="true"></span>
             </button>
           </form>
-
-          <div class="login-actions">
-            <button class="btn btn-ghost btn-block" type="button" id="toggle-mode">Create an account</button>
-            <button class="btn btn-text btn-block" type="button" id="continue-guest">Continue without an account</button>
-          </div>
         </div>
       </div>
     </section>
@@ -102,7 +57,7 @@
             <span id="user-name">Guest</span>
           </button>
           <div class="menu" id="user-menu" hidden role="menu">
-            <button type="button" role="menuitem" data-action="profile">Profile (soon)</button>
+            <p class="menu-id" id="menu-canvas-id"></p>
             <button type="button" role="menuitem" data-action="logout">Sign out</button>
           </div>
         </div>
@@ -131,13 +86,13 @@
           <section class="page" id="page-dashboard">
             <div class="empty">
               <h1>Dashboard</h1>
-              <p>This room stays empty until canvas lands.</p>
+              <p id="dashboard-status">This room stays empty until you sign in with Canvas.</p>
             </div>
           </section>
           <section class="page" id="page-settings" hidden>
             <div class="empty">
               <h1>Settings</h1>
-              <p>Preferences will live here. Nothing to configure yet.</p>
+              <p id="settings-status">Preferences will live here. Nothing to configure yet.</p>
             </div>
           </section>
       </main>
