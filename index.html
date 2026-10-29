@@ -4,9 +4,145 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Canvi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div class="pointer" id="pointer" hidden></div>
+    <p class="caption" id="caption" hidden></p>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+
+    <section class="view view-login" id="view-login" data-view="login">
+      <div class="login-stage">
+        <p class="mark">Canvi</p>
+        <div class="login-card" id="login-card">
+          <div class="login-copy">
+            <h1 id="login-title">Welcome back</h1>
+            <p id="login-subtitle">Sign in to continue. Auth wiring comes later — this surface already behaves.</p>
+          </div>
+
+          <form class="login-form" id="login-form" novalidate>
+            <label class="field" id="name-field" hidden>
+              <span>Name</span>
+              <input id="name-input" name="name" type="text" autocomplete="name" placeholder="Your name" />
+            </label>
+
+            <label class="field">
+              <span>Email</span>
+              <input
+                id="email-input"
+                name="email"
+                type="email"
+                autocomplete="username"
+                placeholder="you@studio.com"
+                required
+              />
+              <em class="field-hint" id="email-hint"></em>
+            </label>
+
+            <label class="field">
+              <span>Password</span>
+              <div class="field-row">
+                <input
+                  id="password-input"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="••••••••"
+                  required
+                />
+                <button class="btn btn-icon" type="button" id="toggle-password" aria-pressed="false" aria-label="Show password">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </button>
+              </div>
+            </label>
+
+            <div class="login-meta">
+              <button class="switch" type="button" id="remember-me" aria-pressed="false">
+                <span class="switch-track"><span class="switch-knob"></span></span>
+                Remember me
+              </button>
+              <button class="btn btn-text" type="button" id="forgot-password">Forgot password</button>
+            </div>
+
+            <button class="btn btn-gold btn-block" type="submit" id="submit-auth" data-magnetic>
+              <span class="btn-label">Sign in</span>
+              <span class="btn-spinner" aria-hidden="true"></span>
+            </button>
+          </form>
+
+          <div class="login-actions">
+            <button class="btn btn-ghost btn-block" type="button" id="toggle-mode">Create an account</button>
+            <button class="btn btn-text btn-block" type="button" id="continue-guest">Continue without an account</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view view-app" id="view-app" data-view="app" hidden>
+      <header class="shell-top">
+        <p class="mark">Canvi</p>
+        <div class="shell-end">
+          <button class="btn btn-icon" type="button" id="notify-btn" aria-pressed="false" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 9a6 6 0 1 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9Z" />
+              <path d="M10 19a2 2 0 0 0 4 0" />
+            </svg>
+          </button>
+          <button class="user-chip" type="button" id="user-chip" aria-expanded="false" aria-haspopup="menu">
+            <span class="avatar" id="user-avatar">G</span>
+            <span id="user-name">Guest</span>
+          </button>
+          <div class="menu" id="user-menu" hidden role="menu">
+            <button type="button" role="menuitem" data-action="profile">Profile (soon)</button>
+            <button type="button" role="menuitem" data-action="logout">Sign out</button>
+          </div>
+        </div>
+      </header>
+
+      <nav class="side-nav" aria-label="Primary">
+        <button class="segment-btn is-active" type="button" data-page="dashboard" aria-current="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="3" width="8" height="8" rx="1.5" />
+            <rect x="13" y="3" width="8" height="8" rx="1.5" />
+            <rect x="3" y="13" width="8" height="8" rx="1.5" />
+            <rect x="13" y="13" width="8" height="8" rx="1.5" />
+          </svg>
+          Dashboard
+        </button>
+        <button class="segment-btn" type="button" data-page="settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 3v2.2M12 18.8V21M4.9 6.5l1.6 1.6M17.5 15.9l1.6 1.6M3 12h2.2M18.8 12H21M4.9 17.5l1.6-1.6M17.5 8.1l1.6-1.6" />
+          </svg>
+          Settings
+        </button>
+      </nav>
+
+      <main class="shell-main">
+          <section class="page" id="page-dashboard">
+            <div class="empty">
+              <h1>Dashboard</h1>
+              <p>This room stays empty until canvas lands.</p>
+            </div>
+          </section>
+          <section class="page" id="page-settings" hidden>
+            <div class="empty">
+              <h1>Settings</h1>
+              <p>Preferences will live here. Nothing to configure yet.</p>
+            </div>
+          </section>
+      </main>
+    </section>
+
+    <script src="/src/app.js" type="module"></script>
   </body>
 </html>
