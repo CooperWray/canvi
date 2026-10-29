@@ -1,5 +1,8 @@
+import { createCanvasLoginAdapter } from "./auth/canvas-login.js";
+
+const auth = createCanvasLoginAdapter();
+
 const state = {
-  mode: "signin",
   page: "dashboard",
   user: null,
 };
@@ -7,23 +10,16 @@ const state = {
 const viewLogin = document.querySelector("#view-login");
 const viewApp = document.querySelector("#view-app");
 const form = document.querySelector("#login-form");
-const emailInput = document.querySelector("#email-input");
-const passwordInput = document.querySelector("#password-input");
-const nameField = document.querySelector("#name-field");
-const nameInput = document.querySelector("#name-input");
-const emailHint = document.querySelector("#email-hint");
-const loginTitle = document.querySelector("#login-title");
-const loginSubtitle = document.querySelector("#login-subtitle");
+const canvasHost = document.querySelector("#canvas-host");
+const loginHint = document.querySelector("#login-hint");
 const submitBtn = document.querySelector("#submit-auth");
-const toggleMode = document.querySelector("#toggle-mode");
-const togglePassword = document.querySelector("#toggle-password");
-const rememberMe = document.querySelector("#remember-me");
-const continueGuest = document.querySelector("#continue-guest");
-const forgotPassword = document.querySelector("#forgot-password");
 const userChip = document.querySelector("#user-chip");
 const userMenu = document.querySelector("#user-menu");
 const userName = document.querySelector("#user-name");
 const userAvatar = document.querySelector("#user-avatar");
+const menuCanvasId = document.querySelector("#menu-canvas-id");
+const dashboardStatus = document.querySelector("#dashboard-status");
+const settingsStatus = document.querySelector("#settings-status");
 const notifyBtn = document.querySelector("#notify-btn");
 const segment = document.querySelector(".side-nav");
 const pageDashboard = document.querySelector("#page-dashboard");
@@ -73,6 +69,9 @@ function showApp(user) {
   viewApp.hidden = false;
   userName.textContent = user.name;
   userAvatar.textContent = user.name.slice(0, 1).toUpperCase();
+  menuCanvasId.textContent = `Canvas ID ${user.canvasId}`;
+  dashboardStatus.textContent = `Signed in as ${user.name}. Canvas ID ${user.canvasId}.`;
+  settingsStatus.textContent = `Account is Canvas ID ${user.canvasId} on ${user.host}.`;
   setPage(state.page);
 }
 
@@ -100,56 +99,8 @@ function setPage(page) {
   pageSettings.hidden = page !== "settings";
 }
 
-function setAuthMode(mode) {
-  state.mode = mode;
-  const signup = mode === "signup";
-  nameField.hidden = !signup;
-  loginTitle.textContent = signup ? "Create your studio" : "Welcome back";
-  loginSubtitle.textContent = signup
-    ? "A local account shell. We will connect identity later."
-    : "Sign in to continue. Auth wiring comes later — this surface already behaves.";
-  submitBtn.querySelector(".btn-label").textContent = signup ? "Create account" : "Sign in";
-  toggleMode.textContent = signup ? "I already have an account" : "Create an account";
-  passwordInput.autocomplete = signup ? "new-password" : "current-password";
-}
-
-function validEmail(value) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-async function submitAuth(event) {
-  event.preventDefault();
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-  const name = nameInput.value.trim();
-
-  if (!validEmail(email)) {
-    emailInput.closest(".field").classList.add("is-invalid");
-    emailHint.textContent = "Enter a valid email to continue.";
-    toast("Email needs a second look.");
-    return;
-  }
-
-  emailInput.closest(".field").classList.remove("is-invalid");
-  emailHint.textContent = "";
-
-  if (password.length < 6) {
-    toast("Password must be at least 6 characters.");
-    return;
-  }
-
-  submitBtn.classList.add("is-loading");
-  submitBtn.disabled = true;
-  loginCard.classList.add("is-busy");
-  await wait(900);
-
-  const display = state.mode === "signup" && name ? name : email.split("@")[0];
-  toast(state.mode === "signup" ? "Account shell created." : "Signed in.");
-  showApp({ name: display, email, remember: rememberMe.getAttribute("aria-pressed") === "true" });
-}
-
 function attachDynamics() {
-  document.querySelectorAll(".btn, .switch, .segment-btn, .user-chip, .menu button").forEach((btn) => {
+  document.querySelectorAll(".btn, .segment-btn, .user-chip, .menu button").forEach((btn) => {
     btn.addEventListener("click", ripple);
   });
 
@@ -185,90 +136,37 @@ async function clickThrough(el) {
   await wait(280);
 }
 
-async function typeInto(input, value) {
-  movePointerTo(input);
-  await wait(240);
-  input.focus();
-  input.value = "";
-  for (const char of value) {
-    input.value += char;
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    await wait(45);
-  }
-}
-
 async function walkthrough() {
   pointer.hidden = false;
   showLogin();
-  setAuthMode("signin");
-  caption("Login is a live shell — fields, toggles, and submit already respond.");
+  caption("Continue with Canvas sends you to Canvas, then brings back your Canvas ID.");
   await wait(700);
-  caption("Typing into email and password.");
-  await typeInto(emailInput, "studio@canvi.app");
-  await typeInto(passwordInput, "goldleaf");
-  caption("Show / hide password.");
-  await clickThrough(togglePassword);
-  await clickThrough(togglePassword);
-  caption("Remember me is a pressable switch.");
-  await clickThrough(rememberMe);
-  caption("Forgot password toasts until auth is wired.");
-  await clickThrough(forgotPassword);
-  caption("Flip into create-account mode.");
-  await clickThrough(toggleMode);
-  await typeInto(nameInput, "Avery Gold");
-  caption("Back to sign in.");
-  await clickThrough(toggleMode);
-  caption("Continue without an account.");
-  await clickThrough(continueGuest);
+  movePointerTo(submitBtn);
   await wait(500);
   caption("Dashboard and Settings live in the side rail.");
+  showApp({ name: "Avery Gold", canvasId: "42", host: "canvas.example.edu" });
+  await wait(500);
   await clickThrough(document.querySelector('[data-page="settings"]'));
   await wait(450);
   await clickThrough(document.querySelector('[data-page="dashboard"]'));
   caption("Notifications toggle on and off.");
   await clickThrough(notifyBtn);
-  caption("User menu: profile stub and sign out.");
+  caption("The menu shows the Canvas ID. Sign out revokes the Canvas token.");
   await clickThrough(userChip);
   await wait(350);
-  await clickThrough(userMenu.querySelector('[data-action="profile"]'));
-  await clickThrough(userChip);
-  await wait(200);
   await clickThrough(userMenu.querySelector('[data-action="logout"]'));
   await wait(400);
-  caption("Sign in with a loading gold button.");
-  await typeInto(emailInput, "studio@canvi.app");
-  await typeInto(passwordInput, "goldleaf");
-  await clickThrough(submitBtn);
-  await wait(1200);
   pointer.hidden = true;
   caption("");
   toast("Walkthrough complete.");
 }
 
-form.addEventListener("submit", submitAuth);
-
-togglePassword.addEventListener("click", () => {
-  const show = setPressed(togglePassword);
-  passwordInput.type = show ? "text" : "password";
-  togglePassword.setAttribute("aria-label", show ? "Hide password" : "Show password");
-});
-
-rememberMe.addEventListener("click", () => {
-  const on = setPressed(rememberMe);
-  toast(on ? "We will remember this browser." : "This session stays temporary.");
-});
-
-toggleMode.addEventListener("click", () => {
-  setAuthMode(state.mode === "signin" ? "signup" : "signin");
-});
-
-continueGuest.addEventListener("click", () => {
-  toast("Continuing as guest.");
-  showApp({ name: "Guest", email: "", remember: false });
-});
-
-forgotPassword.addEventListener("click", () => {
-  toast("Password reset will connect here later.");
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  submitBtn.classList.add("is-loading");
+  submitBtn.disabled = true;
+  loginCard.classList.add("is-busy");
+  auth.start();
 });
 
 notifyBtn.addEventListener("click", () => {
@@ -285,24 +183,16 @@ userChip.addEventListener("click", () => {
 userMenu.addEventListener("click", (event) => {
   const action = event.target.closest("button")?.dataset.action;
   if (action === "logout") {
-    toast("Signed out.");
-    showLogin();
-  }
-  if (action === "profile") {
-    toast("Profile comes later.");
-    userMenu.hidden = true;
-    userChip.setAttribute("aria-expanded", "false");
+    auth.logout().finally(() => {
+      toast("Signed out.");
+      showLogin();
+    });
   }
 });
 
 segment.addEventListener("click", (event) => {
   const btn = event.target.closest(".segment-btn");
   if (btn) setPage(btn.dataset.page);
-});
-
-emailInput.addEventListener("input", () => {
-  emailInput.closest(".field").classList.remove("is-invalid");
-  emailHint.textContent = "";
 });
 
 document.addEventListener("click", (event) => {
@@ -313,10 +203,47 @@ document.addEventListener("click", (event) => {
 });
 
 attachDynamics();
-setAuthMode("signin");
+
+const walkthroughMode = new URLSearchParams(location.search).has("walkthrough");
+
+async function boot() {
+  const params = new URLSearchParams(location.search);
+  const authError = params.get("auth_error");
+  if (authError) {
+    const message = auth.errorMessage(authError);
+    if (message) {
+      loginHint.textContent = message;
+      toast(message);
+    }
+    params.delete("auth_error");
+    const next = params.toString();
+    history.replaceState(null, "", next ? `${location.pathname}?${next}` : location.pathname);
+  }
+
+  try {
+    const config = await auth.describe();
+    canvasHost.textContent = config.host ?? "Not configured";
+    if (!config.configured && !loginHint.textContent) {
+      loginHint.textContent = auth.errorMessage("not_configured");
+    }
+  } catch {
+    canvasHost.textContent = "Not configured";
+    if (!loginHint.textContent) loginHint.textContent = auth.errorMessage("not_configured");
+  }
+
+  if (walkthroughMode) {
+    walkthrough();
+    return;
+  }
+
+  try {
+    const user = await auth.currentUser();
+    if (user) showApp(user);
+  } catch {
+    showLogin();
+  }
+}
 
 window.Canvi = { walkthrough, showApp, showLogin, setPage };
 
-if (new URLSearchParams(location.search).has("walkthrough")) {
-  walkthrough();
-}
+boot();
