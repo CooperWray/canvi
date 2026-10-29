@@ -12,4 +12,4 @@
 - Defense in depth status: DEFENSE_IN_DEPTH.md
 - Vulnerability reports: SECURITY.md
 - Skills: `.cursor/skills/defense-in-depth-nodejs`, `.cursor/skills/security-audit`
-- Aikido scans each pull request on its own in `.github/workflows/aikido-pr.yaml` (that PR's base commit and head commit only)
+- Aikido PR Checks scans each pull request on its own. Do not add an `aikido-api-client scan` workflow; Aikido rejects it when the PR Checks app is already installed.

@@ -41,13 +41,13 @@ npm controls in place: `package-lock.json` is committed, CI runs `npm ci`, and t
 - [ ] No npm tokens (or other registry credentials) in Actions secrets
 
 ## 6. Security tooling
-- [ ] Aikido runs on every build
+- [x] Aikido runs on every build
 - [ ] Aikido release gate: the release workflow's stage-publish job `needs:` a passing `scan-release`
 
 Not applicable: website/app, no publish workflow. Section 5 is omitted for the same reason.
 - [ ] Socket reviews every PR that changes dependencies
 
-Per-pull-request Aikido scan is `.github/workflows/aikido-pr.yaml`. It calls `aikido-api-client scan` with that pull request's base SHA and head SHA, in a concurrency group keyed by the pull request number. It becomes a live check when `AIKIDO_CLIENT_API_KEY` is an Actions secret (Aikido → Integrations → Continuous Integration). Fork pull requests skip that job so the key is not exposed; the Aikido PR Checks GitHub app is the path that scans those separately without CI minutes. The default-branch dependency inventory still needs `package-lock.json` on `main` — that is why the scanned-files page listed every JavaScript lockfile as not found.
+The Aikido PR Checks app scans each pull request separately and posts `Aikido Security: check code`. Do not add an `aikido-api-client scan` GitHub Action: Aikido returns 422, "This repository is already protected via the PR checks app." The default-branch dependency inventory still needs `package-lock.json` on `main`.
 
 ## 7. Repository lockdown
 - [ ] Phishing-resistant 2FA (passkeys / hardware keys) on the GitHub and npm accounts (manual)
