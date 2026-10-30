@@ -243,7 +243,7 @@ async function postToken(fetchImpl, origin, params) {
   return response.json();
 }
 
-async function revokeToken(fetchImpl, origin, accessToken) {
+export async function revokeAccessToken(fetchImpl, origin, accessToken) {
   if (!accessToken) return;
   try {
     await fetchImpl(`${origin}/login/oauth2/token`, {
@@ -254,6 +254,25 @@ async function revokeToken(fetchImpl, origin, accessToken) {
   } catch {
     // Revocation is best-effort. The local session is cleared either way.
   }
+}
+
+export function readStoredSession(cookieHeader, secret) {
+  if (!secret) return null;
+  const cookies = parseCookies(cookieHeader);
+  const session = open(cookies[SESSION_COOKIE] ?? "", secret);
+  if (!session?.canvasId || !session.host) return null;
+  if (!/^[0-9]+$/.test(String(session.canvasId))) return null;
+  return session;
+}
+
+export function accessTokenUsable(session, now = Date.now()) {
+  if (!session?.accessToken || typeof session.accessToken !== "string") return false;
+  if (session.expiresAt && session.expiresAt <= now + 30_000) return false;
+  return true;
+}
+
+export function sealSessionCookie(session, secret, { secure }) {
+  return cookie(SESSION_COOKIE, seal(session, secret), { maxAge: SESSION_TTL_SECONDS, secure });
 }
 
 function sessionFromIdentity(identity, host) {
@@ -269,7 +288,7 @@ function sessionFromIdentity(identity, host) {
   };
 }
 
-export function createCanvasAuthMiddleware(env, { fetch: fetchImpl = fetch } = {}) {
+export function createCanvasAuthMiddleware(env, { fetch: fetchImpl = fetch, onSession } = {}) {
   const config = configured(readConfig(env));
 
   return function canvasAuth(req, res, next) {
@@ -337,6 +356,7 @@ export function createCanvasAuthMiddleware(env, { fetch: fetchImpl = fetch } = {
         .then((payload) => {
           const identity = identityFromToken(payload);
           const session = sessionFromIdentity(identity, hostOf(config.origin));
+          if (onSession) onSession(session);
           const sealed = seal(session, config.sessionSecret);
           return redirect(res, "/", [
             clearPending,
@@ -382,7 +402,7 @@ export function createCanvasAuthMiddleware(env, { fetch: fetchImpl = fetch } = {
       const clearSession = cookie(SESSION_COOKIE, "", { maxAge: 0, secure });
       if (!config) return json(res, 200, { ok: true }, [clearSession]);
       const session = open(cookies[SESSION_COOKIE] ?? "", config.sessionSecret);
-      return revokeToken(fetchImpl, config.origin, session?.accessToken).then(() =>
+      return revokeAccessToken(fetchImpl, config.origin, session?.accessToken).then(() =>
         json(res, 200, { ok: true }, [clearSession]),
       );
     }

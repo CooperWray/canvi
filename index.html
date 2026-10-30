@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Canvi</title>
+    <script>
+      (function () {
+        try {
+          var saved = JSON.parse(localStorage.getItem("canvi.appearance") || "null");
+          var theme = saved && saved.theme;
+          var dark = theme === "dark" || (theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+          document.documentElement.setAttribute("data-density", saved && saved.density === "compact" ? "compact" : "comfortable");
+        } catch (error) {
+          document.documentElement.setAttribute("data-theme", "light");
+          document.documentElement.setAttribute("data-density", "comfortable");
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -87,6 +101,7 @@
             <header class="page-head">
               <h1>Dashboard</h1>
               <p id="dashboard-status">This room stays empty until you sign in with Canvas.</p>
+              <p class="help">A Canvi complete mark does not submit work to Canvas.</p>
             </header>
             <div class="blocks">
               <section class="block" aria-labelledby="classes-heading">
@@ -108,10 +123,11 @@
             </div>
           </section>
           <section class="page" id="page-settings" hidden>
-            <div class="empty">
+            <header class="page-head">
               <h1>Settings</h1>
-              <p id="settings-status">Preferences will live here. Nothing to configure yet.</p>
-            </div>
+              <p id="settings-status">Canvi loads your settings.</p>
+            </header>
+            <div id="settings-root"></div>
           </section>
       </main>
     </section>
