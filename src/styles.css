@@ -689,6 +689,62 @@ html[data-theme="dark"] .settings-nav-btn:hover {
   background: #2c261c;
 }
 
+html[data-theme="night"] {
+  --white: #000000;
+  --white-pure: #000000;
+  --gold: #ffffff;
+  --gold-deep: #ffffff;
+  --gold-soft: #3a3a3a;
+  --ink: #ffffff;
+  --muted: #d0d0d0;
+  --line: #3a3a3a;
+  --danger: #ffb4a8;
+  color: var(--ink);
+  background: #000000;
+}
+
+html[data-theme="night"] body {
+  background: #000000;
+}
+
+html[data-theme="night"] .btn-gold,
+html[data-theme="night"] .avatar {
+  color: #000000;
+}
+
+html[data-theme="night"] .btn-gold:hover {
+  background: #e6e6e6;
+  color: #000000;
+}
+
+html[data-theme="night"] .switch-track {
+  background: #1a1a1a;
+}
+
+html[data-theme="night"] .switch[aria-pressed="true"] .switch-knob {
+  background: #000000;
+}
+
+html[data-theme="night"] .segment-btn:hover,
+html[data-theme="night"] .segment-btn.is-active,
+html[data-theme="night"] .menu button:hover,
+html[data-theme="night"] .btn-ghost:hover,
+html[data-theme="night"] .btn-icon[aria-pressed="true"],
+html[data-theme="night"] .settings-nav-btn.is-active,
+html[data-theme="night"] .settings-nav-btn:hover {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+html[data-theme="night"] .block,
+html[data-theme="night"] .page .empty {
+  background: #000000;
+}
+
+html[data-theme="night"] .confirm-dialog::backdrop {
+  background: rgb(0 0 0 / 0.72);
+}
+
 html[data-density="compact"] .shell-main {
   padding: 20px 16px 40px;
 }

@@ -8,6 +8,7 @@ import {
   defaultClassPrefs,
   defaultSettings,
   exportPayload,
+  normalizeSettings,
   formatDue,
   isQuietAt,
   presentDashboard,
@@ -50,6 +51,16 @@ test("a failed save restores the previous settings", async () => {
   assert.equal(result.ok, false);
   assert.equal(result.status, "error");
   assert.equal(result.settings.account.displayName, "Avery");
+});
+
+test("a night theme is saved and an unknown theme is rejected", () => {
+  const current = defaultSettings();
+  const next = applyPatch(current, { appearance: { theme: "night" } });
+  assert.equal(next.appearance.theme, "night");
+  assert.equal(current.appearance.theme, "system");
+  assert.throws(() => applyPatch(next, { appearance: { theme: "blue" } }), /invalid_choice/);
+  assert.equal(next.appearance.theme, "night");
+  assert.equal(normalizeSettings({ appearance: { theme: "night" } }).appearance.theme, "night");
 });
 
 test("an invalid time zone does not change stored settings", () => {

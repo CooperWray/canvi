@@ -91,9 +91,15 @@ function deviceZone() {
 
 function applyAppearance(next) {
   const theme = next?.appearance?.theme ?? "system";
-  const dark = theme === "dark" || (theme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  document.documentElement.dataset.theme = resolvedTheme(theme);
   document.documentElement.dataset.density = next?.appearance?.density === "compact" ? "compact" : "comfortable";
+}
+
+function resolvedTheme(theme) {
+  if (theme === "night") return "night";
+  if (theme === "light") return "light";
+  if (theme === "dark") return "dark";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 function paintStatus() {

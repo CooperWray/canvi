@@ -9,8 +9,10 @@
         try {
           var saved = JSON.parse(localStorage.getItem("canvi.appearance") || "null");
           var theme = saved && saved.theme;
-          var dark = theme === "dark" || (theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
-          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+          var mode = "light";
+          if (theme === "night") mode = "night";
+          else if (theme === "dark" || (theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches)) mode = "dark";
+          document.documentElement.setAttribute("data-theme", mode);
           document.documentElement.setAttribute("data-density", saved && saved.density === "compact" ? "compact" : "comfortable");
         } catch (error) {
           document.documentElement.setAttribute("data-theme", "light");

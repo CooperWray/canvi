@@ -758,9 +758,11 @@ export function createSettingsController({
         options: [
           { id: "light", label: "Light" },
           { id: "dark", label: "Dark" },
+          { id: "night", label: "Night" },
           { id: "system", label: "System" },
         ],
       }),
+      help("Night uses a black page and white accents."),
       radios({
         name: "density",
         legend: "Layout density",
