@@ -35,7 +35,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
   color: inherit;
 }
@@ -47,7 +49,10 @@ button {
 }
 
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 3px;
 }
@@ -648,4 +653,342 @@ input:focus-visible {
 
 .segment-btn:active {
   transform: none;
+}
+
+html[data-theme="dark"] {
+  --white: #14110d;
+  --white-pure: #211c16;
+  --gold: #c4a056;
+  --gold-deep: #e6cb8a;
+  --gold-soft: #6a5430;
+  --ink: #f6f0e4;
+  --muted: #d2c4ae;
+  --line: #4a4034;
+  --danger: #f0b2a0;
+  color: var(--ink);
+  background: var(--white);
+}
+
+html[data-theme="dark"] body {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, #2a2418 0%, transparent 55%),
+    var(--white);
+}
+
+html[data-theme="dark"] .switch-track {
+  background: #3a3228;
+}
+
+html[data-theme="dark"] .segment-btn:hover,
+html[data-theme="dark"] .segment-btn.is-active,
+html[data-theme="dark"] .menu button:hover,
+html[data-theme="dark"] .btn-ghost:hover,
+html[data-theme="dark"] .btn-icon[aria-pressed="true"],
+html[data-theme="dark"] .settings-nav-btn.is-active,
+html[data-theme="dark"] .settings-nav-btn:hover {
+  background: #2c261c;
+}
+
+html[data-theme="night"] {
+  --white: #000000;
+  --white-pure: #000000;
+  --gold: #ffffff;
+  --gold-deep: #ffffff;
+  --gold-soft: #3a3a3a;
+  --ink: #ffffff;
+  --muted: #d0d0d0;
+  --line: #3a3a3a;
+  --danger: #ffb4a8;
+  color: var(--ink);
+  background: #000000;
+}
+
+html[data-theme="night"] body {
+  background: #000000;
+}
+
+html[data-theme="night"] .btn-gold,
+html[data-theme="night"] .avatar {
+  color: #000000;
+}
+
+html[data-theme="night"] .btn-gold:hover {
+  background: #e6e6e6;
+  color: #000000;
+}
+
+html[data-theme="night"] .switch-track {
+  background: #1a1a1a;
+}
+
+html[data-theme="night"] .switch[aria-pressed="true"] .switch-knob {
+  background: #000000;
+}
+
+html[data-theme="night"] .segment-btn:hover,
+html[data-theme="night"] .segment-btn.is-active,
+html[data-theme="night"] .menu button:hover,
+html[data-theme="night"] .btn-ghost:hover,
+html[data-theme="night"] .btn-icon[aria-pressed="true"],
+html[data-theme="night"] .settings-nav-btn.is-active,
+html[data-theme="night"] .settings-nav-btn:hover {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+html[data-theme="night"] .block,
+html[data-theme="night"] .page .empty {
+  background: #000000;
+}
+
+html[data-theme="night"] .confirm-dialog::backdrop {
+  background: rgb(0 0 0 / 0.72);
+}
+
+html[data-density="compact"] .shell-main {
+  padding: 20px 16px 40px;
+}
+
+html[data-density="compact"] .page-head h1,
+html[data-density="compact"] .settings-panel h2 {
+  font-size: 32px;
+}
+
+html[data-density="compact"] .block,
+html[data-density="compact"] .settings-card {
+  min-height: 0;
+  padding: 12px 14px;
+}
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 28px;
+  margin-top: 22px;
+  align-items: start;
+}
+
+.settings-jump {
+  display: none;
+}
+
+.settings-card fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.settings-nav,
+.stack,
+.settings-card,
+.choice-set,
+.swatches {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-nav {
+  position: sticky;
+  top: 0;
+  gap: 4px;
+}
+
+.settings-nav-btn {
+  text-align: left;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  color: var(--muted);
+}
+
+.settings-nav-btn:hover,
+.settings-nav-btn.is-active {
+  color: var(--gold-deep);
+  background: #f8efd8;
+}
+
+.settings-panel h2,
+.settings-card h3 {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 500;
+}
+
+.settings-panel h2 {
+  font-size: 36px;
+}
+
+.settings-card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--white-pure);
+  padding: 18px;
+}
+
+.settings-card > .btn {
+  align-self: flex-start;
+}
+
+button.switch {
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: flex-end;
+}
+
+.set-label,
+.choice-set legend,
+.swatches legend {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.set-field,
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.set-field input,
+.set-field select,
+.settings-jump select {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--white);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: var(--ink);
+}
+
+.help,
+.set-value,
+.facts dd,
+.save-status {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+}
+
+.facts dt {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.facts dd {
+  color: var(--ink);
+}
+
+.choice,
+.swatch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 15px;
+}
+
+.swatches {
+  border: 0;
+}
+
+.swatch-chip {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+}
+
+.toggle-row,
+.mini-row,
+.form-actions,
+.item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: var(--gold-deep);
+  font-size: 12px;
+}
+
+.btn-danger {
+  background: var(--white-pure);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+
+.page-head .help {
+  margin-top: 8px;
+}
+
+.block h3 {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--gold-deep);
+}
+
+.block li {
+  border-left: 3px solid transparent;
+  padding-left: 8px;
+}
+
+.confirm-dialog {
+  width: min(440px, calc(100vw - 32px));
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--white-pure);
+  color: var(--ink);
+  padding: 22px;
+}
+
+.confirm-dialog::backdrop {
+  background: rgb(27 23 16 / 0.45);
+}
+
+@media (max-width: 860px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-nav {
+    display: none;
+  }
+
+  .settings-jump {
+    display: block;
+  }
+
+  .facts {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

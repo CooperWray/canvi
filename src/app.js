@@ -1,5 +1,8 @@
 import { createCanvasLoginAdapter } from "./auth/canvas-login.js";
 import { createCanvasDashboardAdapter } from "./dashboard/canvas-dashboard.js";
+import { defaultSettings, presentDashboard } from "./settings/model.js";
+import { createReminderRuntime } from "./settings/reminder-runtime.js";
+import { createSettingsController } from "./settings/settings-page.js";
 
 const auth = createCanvasLoginAdapter();
 const dashboard = createCanvasDashboardAdapter();
@@ -8,6 +11,18 @@ const state = {
   page: "dashboard",
   user: null,
 };
+
+const blankCanvas = {
+  classes: [],
+  assignments: [],
+  tests: [],
+  reminders: [],
+  catalog: [],
+};
+
+let canvasData = { ...blankCanvas };
+let settings = defaultSettings();
+let pageChosen = false;
 
 const viewLogin = document.querySelector("#view-login");
 const viewApp = document.querySelector("#view-app");
@@ -22,16 +37,11 @@ const userAvatar = document.querySelector("#user-avatar");
 const menuCanvasId = document.querySelector("#menu-canvas-id");
 const dashboardStatus = document.querySelector("#dashboard-status");
 const settingsStatus = document.querySelector("#settings-status");
-const blocks = {
-  classes: document.querySelector("#block-classes"),
-  assignments: document.querySelector("#block-assignments"),
-  tests: document.querySelector("#block-tests"),
-  reminders: document.querySelector("#block-reminders"),
-};
 const notifyBtn = document.querySelector("#notify-btn");
 const segment = document.querySelector(".side-nav");
 const pageDashboard = document.querySelector("#page-dashboard");
 const pageSettings = document.querySelector("#page-settings");
+const dashboardBlocks = document.querySelector(".blocks");
 const toasts = document.querySelector("#toasts");
 const pointer = document.querySelector("#pointer");
 const loginCard = document.querySelector("#login-card");
@@ -71,44 +81,148 @@ function setPressed(button, value = null) {
   return next;
 }
 
-function clearDashboard() {
-  for (const list of Object.values(blocks)) list.replaceChildren();
+function deviceZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    return "UTC";
+  }
 }
 
-function paintDashboard(data) {
-  for (const [key, list] of Object.entries(blocks)) {
-    list.replaceChildren();
-    for (const item of data[key] ?? []) {
-      const li = document.createElement("li");
-      if (item.url) {
-        const link = document.createElement("a");
-        link.href = item.url;
-        link.textContent = item.title;
-        link.rel = "noopener noreferrer";
-        link.target = "_blank";
-        li.append(link);
-      } else {
-        const title = document.createElement("strong");
-        title.textContent = item.title;
-        li.append(title);
-      }
-      if (item.detail) {
-        const detail = document.createElement("span");
-        detail.textContent = item.detail;
-        li.append(detail);
-      }
-      list.append(li);
-    }
+function applyAppearance(next) {
+  const theme = next?.appearance?.theme ?? "system";
+  document.documentElement.dataset.theme = resolvedTheme(theme);
+  document.documentElement.dataset.density = next?.appearance?.density === "compact" ? "compact" : "comfortable";
+}
+
+function resolvedTheme(theme) {
+  if (theme === "night") return "night";
+  if (theme === "light") return "light";
+  if (theme === "dark") return "dark";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function paintStatus() {
+  if (!state.user) return;
+  const name = settings.account.displayName || state.user.name;
+  const message = settingsController.getConnection()?.message;
+  dashboardStatus.textContent = message
+    ? `Signed in as ${name}. Canvas ID ${state.user.canvasId}. ${message}`
+    : `Signed in as ${name}. Canvas ID ${state.user.canvasId}.`;
+}
+
+function repaint() {
+  applyAppearance(settings);
+  paintDashboard(presentDashboard(canvasData, settings, new Date(), deviceZone()));
+  if (!state.user) return;
+  const name = settings.account.displayName || state.user.name;
+  userName.textContent = name;
+  userAvatar.textContent = name.slice(0, 1).toUpperCase();
+  paintStatus();
+}
+
+function paintDashboard(view) {
+  const container = dashboardBlocks;
+  container.replaceChildren();
+  if (!view.sections.length) {
+    container.append(note("Every dashboard section is hidden. Turn one on in Settings."));
+    return;
   }
+  for (const section of view.sections) {
+    const block = document.createElement("section");
+    block.className = "block";
+    block.dataset.section = section.id;
+    const heading = document.createElement("h2");
+    heading.textContent = section.title;
+    block.append(heading);
+    const items = section.groups.flatMap((group) => group.items);
+    if (!items.length) block.append(note(section.empty || "Canvi has no items here yet."));
+    for (const group of section.groups) {
+      if (!group.items.length) continue;
+      if (group.heading) {
+        const label = document.createElement("h3");
+        label.textContent = group.heading;
+        block.append(label);
+      }
+      const list = document.createElement("ul");
+      for (const item of group.items) list.append(itemRow(item));
+      block.append(list);
+    }
+    container.append(block);
+  }
+}
+
+function note(text) {
+  const node = document.createElement("p");
+  node.className = "help";
+  node.textContent = text;
+  return node;
+}
+
+function itemRow(item) {
+  const li = document.createElement("li");
+  if (item.color && /^#[0-9a-f]{6}$/i.test(item.color)) li.style.borderLeftColor = item.color;
+  if (item.url) {
+    const link = document.createElement("a");
+    link.href = item.url;
+    link.textContent = item.title;
+    link.rel = "noopener noreferrer";
+    link.target = "_blank";
+    li.append(link);
+  } else {
+    const title = document.createElement("strong");
+    title.textContent = item.title;
+    li.append(title);
+  }
+  if (item.detail) li.append(noteSpan(item.detail));
+  if (item.typeLabel) li.append(noteSpan(item.typeLabel));
+  if (item.submitted) li.append(noteSpan("Submitted in Canvas"));
+  if (item.completed) li.append(noteSpan("Complete in Canvi"));
+  if (item.canvasType === "course") return li;
+  const actions = document.createElement("div");
+  actions.className = "item-actions";
+  actions.append(itemButton(item.completed ? "Mark not complete" : "Mark complete in Canvi", "complete", item.id));
+  if (item.canvasType === "assignment" || item.canvasType === "quiz" || item.origin === "manual") {
+    actions.append(itemButton(item.important ? "Remove important" : "Mark important", "important", item.id));
+  }
+  if (item.canvasType === "assignment") {
+    actions.append(itemButton(item.labeledTest ? "Remove test label" : "Label as a test", "label", item.id));
+  }
+  li.append(actions);
+  return li;
+}
+
+function noteSpan(text) {
+  const span = document.createElement("span");
+  span.textContent = text;
+  return span;
+}
+
+function itemButton(text, action, id) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn btn-text";
+  button.dataset.itemAction = action;
+  button.dataset.id = id;
+  button.textContent = text;
+  return button;
+}
+
+function toggleId(list, id) {
+  const next = new Set(list);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return [...next];
 }
 
 async function loadDashboard() {
-  clearDashboard();
   try {
-    paintDashboard(await dashboard.load());
+    canvasData = await dashboard.load();
   } catch {
-    clearDashboard();
+    canvasData = { ...blankCanvas };
   }
+  settingsController.setCanvas(canvasData);
+  repaint();
 }
 
 function showApp(user) {
@@ -119,13 +233,40 @@ function showApp(user) {
   userAvatar.textContent = user.name.slice(0, 1).toUpperCase();
   menuCanvasId.textContent = `Canvas ID ${user.canvasId}`;
   dashboardStatus.textContent = `Signed in as ${user.name}. Canvas ID ${user.canvasId}.`;
-  settingsStatus.textContent = `Account is Canvas ID ${user.canvasId} on ${user.host}.`;
   setPage(state.page);
-  loadDashboard();
+  void openWorkspace(user);
+}
+
+async function openWorkspace(user) {
+  await settingsController.start(user);
+  const loaded = settingsController.getSettings();
+  if (loaded) settings = loaded;
+  if (!walkthroughMode) reminders.start();
+  await loadDashboard();
+  await settingsController.reload();
+  const next = settingsController.getSettings();
+  if (next) settings = next;
+  repaint();
+  if (!pageChosen && next?.appearance.landing === "settings") setPage("settings");
+}
+
+function signOut() {
+  reminders.stop();
+  settingsController.stop();
+  settings = defaultSettings();
+  canvasData = { ...blankCanvas };
+  auth.logout().finally(() => {
+    toast("Signed out.");
+    showLogin();
+  });
 }
 
 function showLogin() {
+  reminders.stop();
+  settingsController.stop();
   state.user = null;
+  settings = defaultSettings();
+  canvasData = { ...blankCanvas };
   viewApp.hidden = true;
   viewLogin.hidden = false;
   userMenu.hidden = true;
@@ -133,7 +274,7 @@ function showLogin() {
   submitBtn.classList.remove("is-loading");
   submitBtn.disabled = false;
   loginCard.classList.remove("is-busy");
-  clearDashboard();
+  dashboardBlocks.replaceChildren();
 }
 
 function setPage(page) {
@@ -220,8 +361,10 @@ form.addEventListener("submit", (event) => {
 });
 
 notifyBtn.addEventListener("click", () => {
-  const on = setPressed(notifyBtn);
-  toast(on ? "Notifications armed." : "Notifications quiet.");
+  pageChosen = true;
+  setPage("settings");
+  settingsController.open("reminders");
+  toast("Reminder controls are in Settings.");
 });
 
 userChip.addEventListener("click", () => {
@@ -232,17 +375,30 @@ userChip.addEventListener("click", () => {
 
 userMenu.addEventListener("click", (event) => {
   const action = event.target.closest("button")?.dataset.action;
-  if (action === "logout") {
-    auth.logout().finally(() => {
-      toast("Signed out.");
-      showLogin();
-    });
-  }
+  if (action === "logout") signOut();
 });
 
 segment.addEventListener("click", (event) => {
   const btn = event.target.closest(".segment-btn");
-  if (btn) setPage(btn.dataset.page);
+  if (!btn) return;
+  pageChosen = true;
+  setPage(btn.dataset.page);
+});
+
+dashboardBlocks.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-item-action]");
+  const current = settingsController.getSettings();
+  if (!button || !current) return;
+  const id = button.dataset.id;
+  if (button.dataset.itemAction === "complete") {
+    void settingsController.patch({ work: { completedIds: toggleId(current.work.completedIds, id) } });
+  }
+  if (button.dataset.itemAction === "important") {
+    void settingsController.patch({ work: { importantIds: toggleId(current.work.importantIds, id) } });
+  }
+  if (button.dataset.itemAction === "label") {
+    void settingsController.patch({ work: { testLabels: toggleId(current.work.testLabels, id) } });
+  }
 });
 
 document.addEventListener("click", (event) => {
@@ -255,6 +411,53 @@ document.addEventListener("click", (event) => {
 attachDynamics();
 
 const walkthroughMode = new URLSearchParams(location.search).has("walkthrough");
+
+function deliverNotice(item, { browser = false } = {}) {
+  toast(`${item.title}. ${item.body}`);
+  const current = settingsController.getSettings();
+  if (!browser || !current?.reminders.browserEnabled) return;
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  try {
+    new Notification(item.title, { body: item.body });
+  } catch {
+    // The in-page notice still showed.
+  }
+}
+
+const settingsController = createSettingsController({
+  root: document.querySelector("#settings-root"),
+  statusNode: settingsStatus,
+  onSettings(next) {
+    settings = next;
+    if (state.user) repaint();
+  },
+  onConnection() {
+    if (state.user) paintStatus();
+  },
+  onDashboard(data) {
+    canvasData = data ?? blankCanvas;
+    if (state.user) repaint();
+  },
+  onSignOut: signOut,
+  onNotice(item) {
+    deliverNotice(item, { browser: false });
+  },
+});
+
+const reminders = createReminderRuntime({
+  getState: () => ({
+    user: state.user,
+    settings: settingsController.getSettings(),
+    canvas: canvasData,
+    deviceZone: deviceZone(),
+  }),
+  notify: (item) => deliverNotice(item, { browser: true }),
+  storage: localStorage,
+});
+
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  if (settings.appearance.theme === "system") applyAppearance(settings);
+});
 
 async function boot() {
   const params = new URLSearchParams(location.search);
