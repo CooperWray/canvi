@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "node --test server/canvas-auth.test.mjs"
+    "test": "node --test server/*.test.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",

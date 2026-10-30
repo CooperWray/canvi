@@ -1,10 +1,13 @@
 import { loadEnv } from "vite";
 import { createCanvasAuthMiddleware } from "./canvas-auth.mjs";
+import { createCanvasDashboardMiddleware } from "./canvas-dashboard.mjs";
 
 export function canvasAuthPlugin() {
   const attach = (server) => {
     const fromFile = loadEnv(server.config.mode, server.config.root, "");
-    server.middlewares.use(createCanvasAuthMiddleware({ ...fromFile, ...process.env }));
+    const env = { ...fromFile, ...process.env };
+    server.middlewares.use(createCanvasAuthMiddleware(env));
+    server.middlewares.use(createCanvasDashboardMiddleware(env));
   };
 
   return {
