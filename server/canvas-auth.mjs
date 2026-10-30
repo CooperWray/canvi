@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
 const OAUTH_COOKIE = "canvi_oauth";
-const SESSION_COOKIE = "canvi_session";
+export const SESSION_COOKIE = "canvi_session";
 const OAUTH_TTL_MS = 10 * 60 * 1000;
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 14;
 
@@ -158,6 +158,19 @@ function readConfig(env) {
     scopes: env.CANVAS_OAUTH_SCOPES?.trim() ?? "",
     sessionSecret: env.SESSION_SECRET?.trim() ?? "",
   };
+}
+
+export function canvasServerConfig(env) {
+  return configured(readConfig(env));
+}
+
+export function sessionFromCookieHeader(cookieHeader, secret) {
+  if (!secret) return null;
+  const cookies = parseCookies(cookieHeader);
+  const session = open(cookies[SESSION_COOKIE] ?? "", secret);
+  if (!session?.canvasId || !session.accessToken || !session.host) return null;
+  if (session.expiresAt && session.expiresAt <= Date.now() + 30_000) return null;
+  return session;
 }
 
 function configured(config) {

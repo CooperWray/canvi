@@ -84,9 +84,27 @@
 
       <main class="shell-main">
           <section class="page" id="page-dashboard">
-            <div class="empty">
+            <header class="page-head">
               <h1>Dashboard</h1>
               <p id="dashboard-status">This room stays empty until you sign in with Canvas.</p>
+            </header>
+            <div class="blocks">
+              <section class="block" aria-labelledby="classes-heading">
+                <h2 id="classes-heading">Classes</h2>
+                <ul id="block-classes"></ul>
+              </section>
+              <section class="block" aria-labelledby="assignments-heading">
+                <h2 id="assignments-heading">Assignments</h2>
+                <ul id="block-assignments"></ul>
+              </section>
+              <section class="block" aria-labelledby="tests-heading">
+                <h2 id="tests-heading">Tests</h2>
+                <ul id="block-tests"></ul>
+              </section>
+              <section class="block" aria-labelledby="reminders-heading">
+                <h2 id="reminders-heading">Reminders</h2>
+                <ul id="block-reminders"></ul>
+              </section>
             </div>
           </section>
           <section class="page" id="page-settings" hidden>

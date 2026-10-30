@@ -1,6 +1,8 @@
 import { createCanvasLoginAdapter } from "./auth/canvas-login.js";
+import { createCanvasDashboardAdapter } from "./dashboard/canvas-dashboard.js";
 
 const auth = createCanvasLoginAdapter();
+const dashboard = createCanvasDashboardAdapter();
 
 const state = {
   page: "dashboard",
@@ -20,6 +22,12 @@ const userAvatar = document.querySelector("#user-avatar");
 const menuCanvasId = document.querySelector("#menu-canvas-id");
 const dashboardStatus = document.querySelector("#dashboard-status");
 const settingsStatus = document.querySelector("#settings-status");
+const blocks = {
+  classes: document.querySelector("#block-classes"),
+  assignments: document.querySelector("#block-assignments"),
+  tests: document.querySelector("#block-tests"),
+  reminders: document.querySelector("#block-reminders"),
+};
 const notifyBtn = document.querySelector("#notify-btn");
 const segment = document.querySelector(".side-nav");
 const pageDashboard = document.querySelector("#page-dashboard");
@@ -63,6 +71,46 @@ function setPressed(button, value = null) {
   return next;
 }
 
+function clearDashboard() {
+  for (const list of Object.values(blocks)) list.replaceChildren();
+}
+
+function paintDashboard(data) {
+  for (const [key, list] of Object.entries(blocks)) {
+    list.replaceChildren();
+    for (const item of data[key] ?? []) {
+      const li = document.createElement("li");
+      if (item.url) {
+        const link = document.createElement("a");
+        link.href = item.url;
+        link.textContent = item.title;
+        link.rel = "noopener noreferrer";
+        link.target = "_blank";
+        li.append(link);
+      } else {
+        const title = document.createElement("strong");
+        title.textContent = item.title;
+        li.append(title);
+      }
+      if (item.detail) {
+        const detail = document.createElement("span");
+        detail.textContent = item.detail;
+        li.append(detail);
+      }
+      list.append(li);
+    }
+  }
+}
+
+async function loadDashboard() {
+  clearDashboard();
+  try {
+    paintDashboard(await dashboard.load());
+  } catch {
+    clearDashboard();
+  }
+}
+
 function showApp(user) {
   state.user = user;
   viewLogin.hidden = true;
@@ -73,6 +121,7 @@ function showApp(user) {
   dashboardStatus.textContent = `Signed in as ${user.name}. Canvas ID ${user.canvasId}.`;
   settingsStatus.textContent = `Account is Canvas ID ${user.canvasId} on ${user.host}.`;
   setPage(state.page);
+  loadDashboard();
 }
 
 function showLogin() {
@@ -84,6 +133,7 @@ function showLogin() {
   submitBtn.classList.remove("is-loading");
   submitBtn.disabled = false;
   loginCard.classList.remove("is-busy");
+  clearDashboard();
 }
 
 function setPage(page) {

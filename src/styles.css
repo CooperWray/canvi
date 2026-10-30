@@ -481,6 +481,79 @@ input:focus-visible {
   padding: 36px 28px 64px;
 }
 
+.page-head h1 {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 42px;
+  font-weight: 500;
+}
+
+.page-head p {
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.blocks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.block {
+  min-height: 220px;
+  background: rgb(255 255 255 / 0.55);
+  border: 1px dashed var(--gold-soft);
+  border-radius: 24px;
+  padding: 18px 18px 12px;
+}
+
+.block h2 {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+}
+
+.block ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.block li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.block a,
+.block strong {
+  font-weight: 500;
+}
+
+.block a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.block a:hover {
+  color: var(--gold-deep);
+}
+
+.block li span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 860px) {
+  .blocks {
+    grid-template-columns: 1fr;
+  }
+}
+
 .page .empty {
   max-width: 640px;
   margin: 8vh auto 0;
