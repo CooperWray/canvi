@@ -89,6 +89,13 @@
           </svg>
           Dashboard
         </button>
+        <button class="segment-btn" type="button" data-page="calendar">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4" y="5" width="16" height="15" rx="2" />
+            <path d="M8 3.5v4M16 3.5v4M4 10h16" />
+          </svg>
+          Calendar
+        </button>
         <button class="segment-btn" type="button" data-page="settings">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="3" />
@@ -123,6 +130,14 @@
                 <ul id="block-reminders"></ul>
               </section>
             </div>
+          </section>
+          <section class="page" id="page-calendar" hidden>
+            <header class="page-head">
+              <h1>Calendar</h1>
+              <p id="calendar-status">Sign in with Canvas to fill this calendar.</p>
+              <p class="help">Canvi reads each syllabus for midterm dates and final dates.</p>
+            </header>
+            <div id="calendar-root"></div>
           </section>
           <section class="page" id="page-settings" hidden>
             <header class="page-head">

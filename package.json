@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "node --test server/*.test.mjs src/settings/*.test.mjs src/gradescope/*.test.mjs"
+    "test": "node --test server/*.test.mjs src/settings/*.test.mjs src/calendar/*.test.mjs src/dashboard/*.test.mjs src/gradescope/*.test.mjs"
   },
   "dependencies": {
     "@tesseract.js-data/eng": "^1.0.0",

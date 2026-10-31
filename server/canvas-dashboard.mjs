@@ -1,4 +1,5 @@
 import { accessTokenUsable, canvasServerConfig, readStoredSession, sessionFromCookieHeader } from "./canvas-auth.mjs";
+import { extractSyllabusExams } from "./syllabus-exams.mjs";
 import { sanitizeExport } from "../src/settings/model.js";
 
 const MAX_COURSES = 20;
@@ -10,6 +11,7 @@ export function emptyDashboard() {
     assignments: [],
     tests: [],
     reminders: [],
+    exams: [],
   };
 }
 
@@ -74,6 +76,7 @@ export function sortCanvasDashboard({
   quizzes = [],
   events = [],
   notes = [],
+  syllabi = [],
   includeConcluded = false,
   courseIds = null,
 }) {
@@ -229,17 +232,56 @@ export function sortCanvasDashboard({
     return a.when.localeCompare(b.when) || a.title.localeCompare(b.title);
   };
 
-  const publish = (item) => ({
-    id: item.id,
-    title: item.title,
-    detail: item.detail,
-    url: item.url,
-    courseId: item.courseId || "",
-    dueAt: item.dueAt || null,
-    canvasType: item.canvasType || "",
-    submitted: item.submitted === true,
-    concluded: item.concluded === true,
-  });
+  const courseSpan = new Map();
+  for (const course of courses) {
+    const id = course?.id == null ? "" : String(course.id);
+    if (!/^[0-9]+$/.test(id)) continue;
+    courseSpan.set(id, { startAt: course.start_at ?? null, endAt: course.end_at ?? null });
+  }
+
+  const examItems = [];
+  for (const syllabus of syllabi) {
+    const courseId = syllabus?.courseId == null ? "" : String(syllabus.courseId);
+    if (!courseName.has(courseId)) continue;
+    const span = courseSpan.get(courseId) ?? {};
+    const found = extractSyllabusExams(typeof syllabus?.body === "string" ? syllabus.body : "", {
+      courseId,
+      startAt: syllabus?.startAt ?? span.startAt,
+      endAt: syllabus?.endAt ?? span.endAt,
+    });
+    for (const exam of found) {
+      examItems.push({
+        id: exam.id,
+        title: exam.title,
+        detail: detail([courseName.get(courseId), exam.dueAt, exam.clock]),
+        url: canvasUrl(`${origin}/courses/${courseId}/assignments/syllabus`, origin),
+        when: exam.dueAt,
+        courseId,
+        dueAt: exam.dueAt,
+        canvasType: "syllabus_exam",
+        examKind: exam.examKind,
+        clock: exam.clock,
+        submitted: false,
+      });
+    }
+  }
+
+  const publish = (item) => {
+    const next = {
+      id: item.id,
+      title: item.title,
+      detail: item.detail,
+      url: item.url,
+      courseId: item.courseId || "",
+      dueAt: item.dueAt || null,
+      canvasType: item.canvasType || "",
+      submitted: item.submitted === true,
+      concluded: item.concluded === true,
+    };
+    if (item.examKind === "midterm" || item.examKind === "final") next.examKind = item.examKind;
+    if (typeof item.clock === "string" && /^\d{1,2}:\d{2} (AM|PM)$/.test(item.clock)) next.clock = item.clock;
+    return next;
+  };
 
   return {
     classes: classes.map(publish),
@@ -247,14 +289,21 @@ export function sortCanvasDashboard({
     assignments: assignmentItems.sort(byWhen).map(publish),
     tests: tests.sort(byWhen).map(publish),
     reminders: reminders.sort(byWhen).map(publish),
+    exams: examItems.sort(byWhen).map(publish),
   };
 }
 
+function courseIdSet(value) {
+  return new Set((value ?? []).filter((id) => /^[0-9]+$/.test(id)));
+}
+
 export function mergePartialDashboard(previous, next) {
-  const failed = new Set((next?.failedCourseIds ?? []).filter((id) => /^[0-9]+$/.test(id)));
-  if (!previous || failed.size === 0) return next;
+  const failed = courseIdSet(next?.failedCourseIds);
+  const syllabusFailed = courseIdSet(next?.syllabusFailedCourseIds);
+  if (!previous || (failed.size === 0 && syllabusFailed.size === 0)) return next;
   const kept = (key) => (previous[key] ?? []).filter((item) => failed.has(item.courseId));
   const fresh = (key) => (next[key] ?? []).filter((item) => !failed.has(item.courseId));
+  const retainExam = new Set([...failed, ...syllabusFailed]);
   return {
     ...next,
     classes: [...fresh("classes"), ...kept("classes")],
@@ -262,6 +311,10 @@ export function mergePartialDashboard(previous, next) {
     assignments: [...fresh("assignments"), ...kept("assignments")],
     tests: [...fresh("tests"), ...kept("tests")],
     reminders: [...fresh("reminders"), ...kept("reminders")],
+    exams: [
+      ...(next.exams ?? []).filter((item) => !retainExam.has(item.courseId)),
+      ...(previous.exams ?? []).filter((item) => retainExam.has(item.courseId)),
+    ],
     partial: true,
     failedCourseIds: [...failed],
   };
@@ -306,6 +359,36 @@ async function canvasList(fetchImpl, origin, accessToken, path) {
   }
 
   return items;
+}
+
+async function canvasJson(fetchImpl, origin, accessToken, path) {
+  const url = new URL(path, origin);
+  if (url.origin !== origin) return null;
+  const response = await fetchImpl(url, {
+    headers: { authorization: `Bearer ${accessToken}`, accept: "application/json" },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (response.status === 401) {
+    const error = new Error("unauthorized");
+    error.code = "unauthorized";
+    throw error;
+  }
+  if (response.status >= 500) {
+    const error = new Error("canvas_error");
+    error.code = "canvas_error";
+    throw error;
+  }
+  if (!response.ok) return null;
+  const lengthHeader = response.headers?.get?.("content-length");
+  const length = Number(lengthHeader);
+  if (lengthHeader && Number.isFinite(length) && length > 300_000) {
+    const error = new Error("canvas_error");
+    error.code = "canvas_error";
+    throw error;
+  }
+  const body = await response.json();
+  if (!body || typeof body !== "object" || Array.isArray(body)) return null;
+  return body;
 }
 
 async function mapPool(items, limit, fn) {
@@ -373,8 +456,25 @@ export async function readCanvasDashboard(fetchImpl, { origin, accessToken, canv
       .filter((course) => !selected || selected.has(String(course.id)))
       .slice(0, MAX_COURSES);
     const failedCourseIds = [];
+    const syllabusFailedCourseIds = [];
     const collected = await mapPool(toFetch, 4, async (course) => {
       const id = encodeURIComponent(course.id);
+      const courseId = String(course.id);
+      let syllabusBody = "";
+      try {
+        const record = await canvasJson(
+          fetchImpl,
+          origin,
+          accessToken,
+          `/api/v1/courses/${id}?include[]=syllabus_body`,
+        );
+        const sameCourse = record?.id == null || String(record.id) === courseId;
+        if (!sameCourse) syllabusFailedCourseIds.push(courseId);
+        else if (typeof record?.syllabus_body === "string") syllabusBody = record.syllabus_body.slice(0, 200_000);
+      } catch (error) {
+        if (error?.code === "unauthorized") throw error;
+        syllabusFailedCourseIds.push(courseId);
+      }
       try {
         const [assignments, quizzes] = await Promise.all([
           canvasList(
@@ -385,11 +485,11 @@ export async function readCanvasDashboard(fetchImpl, { origin, accessToken, canv
           ),
           canvasList(fetchImpl, origin, accessToken, `/api/v1/courses/${id}/quizzes?per_page=50`),
         ]);
-        return { assignments, quizzes };
+        return { assignments, quizzes, syllabusBody, courseId };
       } catch (error) {
         if (error?.code === "unauthorized") throw error;
-        failedCourseIds.push(String(course.id));
-        return { assignments: [], quizzes: [] };
+        failedCourseIds.push(courseId);
+        return { assignments: [], quizzes: [], syllabusBody: "", courseId };
       }
     });
 
@@ -427,11 +527,15 @@ export async function readCanvasDashboard(fetchImpl, { origin, accessToken, canv
       quizzes: collected.flatMap((entry) => entry.quizzes),
       events,
       notes,
+      syllabi: collected
+        .filter((entry) => entry.syllabusBody)
+        .map((entry) => ({ courseId: entry.courseId, body: entry.syllabusBody })),
       includeConcluded,
       courseIds,
     });
     dashboard.failedCourseIds = failedCourseIds;
-    dashboard.partial = failedCourseIds.length > 0 || concludedError || listError;
+    dashboard.syllabusFailedCourseIds = syllabusFailedCourseIds;
+    dashboard.partial = failedCourseIds.length > 0 || concludedError || listError || syllabusFailedCourseIds.length > 0;
     return dashboard;
   } catch (error) {
     if (error?.code === "unauthorized") throw error;
@@ -452,6 +556,7 @@ function clientDashboard(dashboard) {
   if (!dashboard) return emptyDashboard();
   const copy = sanitizeExport({ ...dashboard });
   delete copy.syncError;
+  delete copy.syllabusFailedCourseIds;
   return copy;
 }
 

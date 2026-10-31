@@ -4,6 +4,7 @@ const BLANK = {
   tests: [],
   reminders: [],
   catalog: [],
+  exams: [],
 };
 
 function safeUrl(value) {
@@ -29,6 +30,8 @@ function items(value) {
       courseId: typeof item?.courseId === "string" ? item.courseId : "",
       dueAt: typeof item?.dueAt === "string" ? item.dueAt : null,
       canvasType: typeof item?.canvasType === "string" ? item.canvasType : "",
+      examKind: item?.examKind === "midterm" || item?.examKind === "final" ? item.examKind : "",
+      clock: typeof item?.clock === "string" && /^\d{1,2}:\d{2} (AM|PM)$/.test(item.clock) ? item.clock : "",
       submitted: item?.submitted === true,
       concluded: item?.concluded === true,
     }))
@@ -47,6 +50,7 @@ export function createCanvasDashboardAdapter({ fetchImpl = fetch } = {}) {
         tests: items(body?.tests),
         reminders: items(body?.reminders),
         catalog: items(body?.catalog),
+        exams: items(body?.exams),
       };
     },
   };
