@@ -386,7 +386,7 @@ export function createSettingsController({
       ]),
       el("div", { class: "settings-card" }, [
         el("h3", { text: "What Canvi imports" }),
-        help("Canvi imports course names, assignments, quizzes, calendar events, and planner notes."),
+        help("Canvi imports course names, assignments, quizzes, calendar events, planner notes, and syllabus exam dates."),
         help("Canvi does not import grades, files, or inbox messages."),
         help("Canvi marks a Canvas quiz as a test."),
         help("You can label another assignment as a test. Canvi does not detect every test."),
@@ -822,7 +822,7 @@ export function createSettingsController({
   function privacyPanel() {
     return el("div", { class: "settings-card stack" }, [
       help("Canvi stores your display name, time zone, and other preferences for this Canvas ID."),
-      help("Canvi stores imported course names, assignments, quizzes, calendar events, and planner notes."),
+      help("Canvi stores imported course names, assignments, quizzes, calendar events, planner notes, and syllabus exam dates."),
       help("Canvi stores personal reminders and tests that you add."),
       help("Canvi does not put your Canvas access token in this page or in the export."),
       el("button", { type: "button", class: "btn btn-ghost", "data-action": "export", text: "Export data" }),
@@ -1123,7 +1123,7 @@ export function createSettingsController({
     const ok = await confirmDialog({
       title: "Remove imported Canvas data",
       lines: [
-        "This removes imported courses, assignments, quizzes, calendar events, and planner notes.",
+        "This removes imported courses, assignments, quizzes, calendar events, planner notes, and syllabus exam dates.",
         "This keeps your settings, personal reminders, and tests you added.",
       ],
       confirmLabel: "Remove imported data",
@@ -1132,7 +1132,7 @@ export function createSettingsController({
     try {
       const payload = await request("POST", "/api/canvas/data/remove", { confirm: CONFIRM_REMOVE_CANVAS });
       applyPayload(payload);
-      onDashboard?.({ classes: [], assignments: [], tests: [], reminders: [], catalog: [] });
+      onDashboard?.({ classes: [], assignments: [], tests: [], reminders: [], catalog: [], exams: [] });
       setSave(COPY.saved);
     } catch (error) {
       setSave(error.message);

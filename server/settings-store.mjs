@@ -107,6 +107,7 @@ export function createSettingsStore({ secret, filePath = null, load, save, now =
           assignments: Array.isArray(safe.assignments) ? safe.assignments : [],
           tests: Array.isArray(safe.tests) ? safe.tests : [],
           reminders: Array.isArray(safe.reminders) ? safe.reminders : [],
+          exams: Array.isArray(safe.exams) ? safe.exams : [],
           catalog: Array.isArray(safe.catalog) ? safe.catalog : [],
           partial: safe.partial === true,
           failedCourseIds: Array.isArray(safe.failedCourseIds) ? safe.failedCourseIds : [],

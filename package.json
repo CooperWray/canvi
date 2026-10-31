@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "node --test server/*.test.mjs src/settings/*.test.mjs"
+    "test": "node --test server/*.test.mjs src/settings/*.test.mjs src/calendar/*.test.mjs src/dashboard/*.test.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",

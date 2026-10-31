@@ -1,4 +1,6 @@
 import { createCanvasLoginAdapter } from "./auth/canvas-login.js";
+import { buildCalendar, isDateKey, shiftMonth } from "./calendar/model.js";
+import { calendarSummary, renderCalendar } from "./calendar/page.js";
 import { createCanvasDashboardAdapter } from "./dashboard/canvas-dashboard.js";
 import { defaultSettings, presentDashboard } from "./settings/model.js";
 import { createReminderRuntime } from "./settings/reminder-runtime.js";
@@ -18,11 +20,14 @@ const blankCanvas = {
   tests: [],
   reminders: [],
   catalog: [],
+  exams: [],
 };
 
 let canvasData = { ...blankCanvas };
 let settings = defaultSettings();
 let pageChosen = false;
+let calendarMonth = null;
+let calendarDay = "";
 
 const viewLogin = document.querySelector("#view-login");
 const viewApp = document.querySelector("#view-app");
@@ -40,7 +45,10 @@ const settingsStatus = document.querySelector("#settings-status");
 const notifyBtn = document.querySelector("#notify-btn");
 const segment = document.querySelector(".side-nav");
 const pageDashboard = document.querySelector("#page-dashboard");
+const pageCalendar = document.querySelector("#page-calendar");
 const pageSettings = document.querySelector("#page-settings");
+const calendarStatus = document.querySelector("#calendar-status");
+const calendarRoot = document.querySelector("#calendar-root");
 const dashboardBlocks = document.querySelector(".blocks");
 const toasts = document.querySelector("#toasts");
 const pointer = document.querySelector("#pointer");
@@ -114,6 +122,7 @@ function paintStatus() {
 function repaint() {
   applyAppearance(settings);
   paintDashboard(presentDashboard(canvasData, settings, new Date(), deviceZone()));
+  paintCalendar();
   if (!state.user) return;
   const name = settings.account.displayName || state.user.name;
   userName.textContent = name;
@@ -150,6 +159,22 @@ function paintDashboard(view) {
     }
     container.append(block);
   }
+}
+
+function currentCalendar() {
+  return buildCalendar({
+    canvas: canvasData,
+    settings,
+    now: new Date(),
+    deviceZone: deviceZone(),
+    month: calendarMonth,
+  });
+}
+
+function paintCalendar() {
+  const view = currentCalendar();
+  if (state.user) calendarStatus.textContent = calendarSummary(view);
+  renderCalendar(calendarRoot, view, { selected: calendarDay });
 }
 
 function note(text) {
@@ -275,6 +300,10 @@ function showLogin() {
   submitBtn.disabled = false;
   loginCard.classList.remove("is-busy");
   dashboardBlocks.replaceChildren();
+  calendarRoot.replaceChildren();
+  calendarMonth = null;
+  calendarDay = "";
+  calendarStatus.textContent = "Sign in with Canvas to fill this calendar.";
 }
 
 function setPage(page) {
@@ -287,6 +316,7 @@ function setPage(page) {
     else btn.removeAttribute("aria-current");
   });
   pageDashboard.hidden = page !== "dashboard";
+  pageCalendar.hidden = page !== "calendar";
   pageSettings.hidden = page !== "settings";
 }
 
@@ -334,9 +364,11 @@ async function walkthrough() {
   await wait(700);
   movePointerTo(submitBtn);
   await wait(500);
-  caption("Dashboard and Settings live in the side rail.");
+  caption("Dashboard, Calendar, and Settings live in the side rail.");
   showApp({ name: "Avery Gold", canvasId: "42", host: "canvas.example.edu" });
   await wait(500);
+  await clickThrough(document.querySelector('[data-page="calendar"]'));
+  await wait(450);
   await clickThrough(document.querySelector('[data-page="settings"]'));
   await wait(450);
   await clickThrough(document.querySelector('[data-page="dashboard"]'));
@@ -383,6 +415,29 @@ segment.addEventListener("click", (event) => {
   if (!btn) return;
   pageChosen = true;
   setPage(btn.dataset.page);
+});
+
+calendarRoot.addEventListener("click", (event) => {
+  const target = event.target.closest("[data-calendar]");
+  if (!target) return;
+  const action = target.dataset.calendar;
+  if (action === "prev" || action === "next") {
+    calendarMonth = shiftMonth(currentCalendar().monthKey, action === "prev" ? -1 : 1);
+    calendarDay = "";
+    paintCalendar();
+  }
+  if (action === "today") {
+    calendarMonth = null;
+    calendarDay = currentCalendar().today;
+    paintCalendar();
+  }
+  if (action === "day" || action === "exam") {
+    const date = target.dataset.date ?? "";
+    if (!isDateKey(date)) return;
+    calendarDay = date;
+    if (action === "exam") calendarMonth = date.slice(0, 7);
+    paintCalendar();
+  }
 });
 
 dashboardBlocks.addEventListener("click", (event) => {
